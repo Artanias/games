@@ -119,8 +119,6 @@ def get_squares(field, image):
 if __name__ == '__main__':
     monitor = get_positions()
     image = grab_monitor(monitor)
-    # Change maschtab image
-    # scaled_img = cv2.resize(image, None, fx=0.5, fy=0.5)
     field_without_num = get_field_1(image)    
     squares = get_squares(field_without_num, image)
     if len(squares) != 81:
