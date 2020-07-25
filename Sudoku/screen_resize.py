@@ -6,6 +6,7 @@ from mss import mss
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
 def get_positions():
     print('Press x')
     while(True):
@@ -36,7 +37,7 @@ def grab_monitor(monitor):
         x, y = 0, 0
         while(y < max_y):
             temp = sct_img[y]
-            if temp.mean() < 5:                
+            if temp.mean() < 5:
                 sct_img = np.delete(sct_img, y, axis=0)
                 max_y -= 1
                 y -= 1
@@ -47,7 +48,7 @@ def grab_monitor(monitor):
                 sct_img = np.delete(sct_img, x, axis=1)
                 max_x -= 1
                 x -= 1
-            x += 1           
+            x += 1
 
         return sct_img
 
@@ -58,14 +59,14 @@ def save_in_pickle(img):
     is_sudocu = input()
     if is_sudocu == 'Y':
         df.loc[df.shape[0]] = (img, 1)
-    else: 
+    else:
         df.loc[df.shape[0]] = (img, 0)
     df.to_pickle('marked_img.pickle')
     print(df.iloc[-1, :])
 
-        
+
 if __name__ == '__main__':
-    for i in range(10):
+    for i in range(30):
         monitor = get_positions()
         image = grab_monitor(monitor)
         scaled_img = cv2.resize(image, (500, 500))

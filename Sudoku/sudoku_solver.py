@@ -3,6 +3,8 @@ import keyboard
 import numpy as np
 import cv2
 from mss import mss
+from tensorflow import keras
+
 
 def get_positions():
     print('Press x')
@@ -34,7 +36,7 @@ def grab_monitor(monitor):
         x, y = 0, 0
         while(y < max_y):
             temp = sct_img[y]
-            if temp.mean() < 5:                
+            if temp.mean() < 5:
                 sct_img = np.delete(sct_img, y, axis=0)
                 max_y -= 1
                 y -= 1
@@ -46,7 +48,7 @@ def grab_monitor(monitor):
                 max_x -= 1
                 x -= 1
             x += 1
-        #cv2.imshow('Image', sct_img)        
+        # cv2.imshow('Image', sct_img)
 
         return sct_img
 
@@ -55,9 +57,9 @@ def get_field_1(image):
     field = np.zeros((image.shape[0], image.shape[1]))
     max_x = image.shape[1]
     max_y = image.shape[0]
-    for y in range(max_y):        
+    for y in range(max_y):
         temp = image[y]
-        if temp.mean() > 100:            
+        if temp.mean() > 100:
             field[y] = temp
     for x in range(max_x):
         temp = image[:, x]
@@ -70,7 +72,7 @@ def get_square_coords(field, x, y):
     coords = [(x, y)]
     max_x = image.shape[1]
     max_y = image.shape[0]
-    while(x < max_x):        
+    while(x < max_x):
         if field[y].mean() > 100:
             if field[:, x].mean() > 100:
                 coords.append((x, y))
@@ -78,25 +80,27 @@ def get_square_coords(field, x, y):
         x += 1
 
     if len(coords) < 2:
-        return 
+        return
 
     y += 1
-    while(y < max_y):        
+    while(y < max_y):
         if field[y].mean() > 100:
             if field[:, x].mean() > 100:
                 coords.append((x, y))
                 break
         y += 1
-        
+
     return coords
 
 
 def get_img_square(img, coords):
     first_point = coords[0]
     second_point = coords[2]
-    square = img[first_point[1]:(second_point[1] + 1), first_point[0]:(second_point[0] + 1)]
+    square = img[first_point[1]:(second_point[1] + 1),
+                 first_point[0]:(second_point[0] + 1)]
     return square
-    
+
+
 def get_squares(field, image):
     squares = []
     max_x = image.shape[1]
@@ -114,15 +118,21 @@ def get_squares(field, image):
                             squares.append(square)
 
     return squares
-                    
-    
+
+
 if __name__ == '__main__':
     monitor = get_positions()
     image = grab_monitor(monitor)
-    field_without_num = get_field_1(image)    
-    squares = get_squares(field_without_num, image)
-    if len(squares) != 81:
-        print('Error squares more than 81 or less')
+    field_without_num = get_field_1(image)
+    scaled_img = cv2.resize(image, (500, 500))
+    model = keras.models.load_model('sudoku_recognition.h5')
+    predict = model.predict(np.array([scaled_img]))
+    if(predict[0][1] == 1):
+        print('It\'s Sudoku')
+        squares = get_squares(field_without_num, image)
+        if len(squares) != 81:
+            print('Error squares more than 81 or less')
+        else:
+            pass
     else:
-        pass
-    #cv2.imshow('Image', )
+        print('It\'s not Sudoku')
