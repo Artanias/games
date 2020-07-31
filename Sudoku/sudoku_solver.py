@@ -5,6 +5,9 @@ import cv2
 from mss import mss
 from tensorflow import keras
 
+import matplotlib.pyplot as plt
+import pandas as pd
+
 
 def get_positions():
     print('Press x')
@@ -115,9 +118,61 @@ def get_squares(field, image):
                         shape1 = square.shape[0]
                         shape2 = square.shape[1]
                         if abs(shape1-shape2) < 5 and square.mean() < 100:
-                            squares.append(square)
+                            if square.size > 500:
+                                squares.append(square)
 
     return squares
+
+
+def check_sq(field, x, y, num):
+    square_x = (x // 3) * 3
+    square_y = (y // 3) * 3
+    square = field[square_y:square_y + 3, square_x: square_x + 3]
+    set_num = (0 == square)
+    sq_zr = (0 == square).mean()
+    ln_zr = (0 == field[y]).mean()
+    cl_zr = (0 == field[:, x]).mean()
+    if (sq_zr < 0.12) or (ln_zr < 0.12) or (cl_zr < 0.12):
+        return True
+    else:
+        for t_i in range(3):
+            for t_j in range(3):
+                t_x = square_x + t_i
+                t_y = square_y + t_j
+                if ((x != t_x) or (y != t_y)) and (square[t_j][t_i] == 0):
+                    if num in field[t_y]:
+                        set_num[t_j][t_i] = False
+                    if num in field[:, t_x]:
+                        set_num[t_j][t_i] = False
+
+    if(set_num.mean() < 0.12):
+        return True
+    else:
+        return False
+    
+    
+def insert_num(field, x, y):
+    square_x = (x // 3) * 3
+    square_y = (y // 3) * 3
+    square = field[square_y:square_y + 3, square_x: square_x + 3]
+    for num in range(1, 10):
+        if num not in field[y]:
+            if num not in field[:, x]:
+                if num not in square:
+                    if(check_sq(field, x, y, num)):
+                        field[y][x] = num
+                        return
+    return
+        
+    
+def solve(field):
+    while(0 in field):
+        for x in range(field.shape[1]):
+            for y in range(field.shape[0]):
+                if field[y][x] != 0:
+                    continue
+                else:
+                    insert_num(field, x, y)
 
 
 if __name__ == '__main__':
@@ -133,6 +188,44 @@ if __name__ == '__main__':
         if len(squares) != 81:
             print('Error squares more than 81 or less')
         else:
-            pass
+            # df = pd.read_pickle('new_squares.pickle')
+            model = keras.models.load_model('num_recognition.h5')
+            nums = []
+            for square in squares:
+                temp_sq = cv2.resize(square, (50, 50))
+                predict = (model.predict(np.array([temp_sq])))[0]
+                for i in range(predict.size):
+                    if abs(1 - predict[i]) < 0.01:
+                        nums.append(i)
+                        break
+                
+                # save square in same size and label it
+                # scaled_img = cv2.resize(square, (50, 50))
+                # plt.imshow(scaled_img)
+                # plt.show()
+                # print('Number: ')
+                # num = int(input())
+                # df.loc[df.shape[0]] = (scaled_img, num)
+                # df.to_pickle('squares.pickle')
+                # print(df.loc[df.shape[0] - 1])
+
+            field = np.array(nums)
+            field.shape = (9, 9)
+            while(True):
+                print(field)
+                print('Correct? (Y)')
+                answer = str(input())
+                if answer == 'Y':            
+                    solve(field)
+                    break
+                else:
+                    print('x = ')
+                    temp_x = int(input())
+                    print('y = ')
+                    temp_y = int(input())
+                    print('num = ')
+                    number = int(input())
+                    field[temp_y][temp_x] = number
+            print(field)
     else:
         print('It\'s not Sudoku')
