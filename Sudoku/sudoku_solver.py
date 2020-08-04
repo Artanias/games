@@ -2,11 +2,12 @@ import pyautogui
 import keyboard
 import numpy as np
 import cv2
+from solver import SudokuSolver
 from mss import mss
 from tensorflow import keras
 
-import matplotlib.pyplot as plt
-import pandas as pd
+# import matplotlib.pyplot as plt
+# import pandas as pd
 
 
 def get_positions():
@@ -149,8 +150,8 @@ def check_sq(field, x, y, num):
         return True
     else:
         return False
-    
-    
+
+
 def insert_num(field, x, y):
     square_x = (x // 3) * 3
     square_y = (y // 3) * 3
@@ -163,8 +164,8 @@ def insert_num(field, x, y):
                         field[y][x] = num
                         return
     return
-        
-    
+
+
 def solve(field):
     while(0 in field):
         for x in range(field.shape[1]):
@@ -195,10 +196,10 @@ if __name__ == '__main__':
                 temp_sq = cv2.resize(square, (50, 50))
                 predict = (model.predict(np.array([temp_sq])))[0]
                 for i in range(predict.size):
-                    if abs(1 - predict[i]) < 0.01:
+                    if abs(1 - predict[i]) < 0.02:
                         nums.append(i)
                         break
-                
+
                 # save square in same size and label it
                 # scaled_img = cv2.resize(square, (50, 50))
                 # plt.imshow(scaled_img)
@@ -206,7 +207,7 @@ if __name__ == '__main__':
                 # print('Number: ')
                 # num = int(input())
                 # df.loc[df.shape[0]] = (scaled_img, num)
-                # df.to_pickle('squares.pickle')
+                # df.to_pickle('new_squares.pickle')
                 # print(df.loc[df.shape[0] - 1])
 
             field = np.array(nums)
@@ -215,8 +216,9 @@ if __name__ == '__main__':
                 print(field)
                 print('Correct? (Y)')
                 answer = str(input())
-                if answer == 'Y':            
-                    solve(field)
+                if answer == 'Y':
+                    # solve(field)
+                    field = SudokuSolver.solve(field)
                     break
                 else:
                     print('x = ')
@@ -226,6 +228,7 @@ if __name__ == '__main__':
                     print('num = ')
                     number = int(input())
                     field[temp_y][temp_x] = number
-            print(field)
+            if field is not None:
+                print(field)
     else:
         print('It\'s not Sudoku')
