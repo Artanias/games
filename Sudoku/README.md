@@ -1,5 +1,6 @@
-sudoku_solver.py solver sudoku from [site](https://sudoku.com/) 
-solver.py my to solve field 9x9
+sudoku_solver.py solve sudoku from [site](https://sudoku.com/) 
+
+solver.py may to solve field 9x9
 
 # Script run sequence
 
